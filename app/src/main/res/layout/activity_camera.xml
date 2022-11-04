@@ -11,13 +11,13 @@
         android:id="@+id/buttonUpload"
         android:layout_width="109dp"
         android:layout_height="43dp"
-        android:layout_marginTop="28dp"
         android:text="Upload"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/buttonNext"
         app:layout_constraintStart_toEndOf="@+id/buttonPrevious"
-        app:layout_constraintTop_toBottomOf="@+id/imageCamera" />
+        app:layout_constraintTop_toBottomOf="@+id/txtLocation"
+        tools:ignore="TouchTargetSizeCheck" />
 
     <ImageView
         android:id="@+id/imageCamera"
@@ -39,7 +39,8 @@
         android:text="Previous"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@+id/buttonUpload"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="TouchTargetSizeCheck,TouchTargetSizeCheck" />
 
     <Button
         android:id="@+id/buttonNext"
@@ -49,5 +50,18 @@
         android:text="Next"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@+id/buttonUpload"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:ignore="TouchTargetSizeCheck" />
+
+    <TextView
+        android:id="@+id/txtLocation"
+        android:layout_width="342dp"
+        android:layout_height="29dp"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="Location"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageCamera" />
 </androidx.constraintlayout.widget.ConstraintLayout>
