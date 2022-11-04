@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <EditText
+        android:id="@+id/editTextURL"
+        android:layout_width="375dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:ems="10"
+        android:hint="Enter Image URL"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.571"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/buttonAdd"
+        android:layout_width="109dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="12dp"
+        android:text="Add"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@+id/buttonClear"
+        app:layout_constraintStart_toEndOf="@+id/buttonCamera"
+        app:layout_constraintTop_toBottomOf="@+id/editTextURL" />
+
+    <Button
+        android:id="@+id/buttonPrevious"
+        android:layout_width="109dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="8dp"
+        android:text="PREVIOUS"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@+id/buttonNext"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/buttonCamera"
+        app:layout_constraintTop_toBottomOf="@+id/buttonCamera" />
+
+    <Button
+        android:id="@+id/buttonNext"
+        android:layout_width="109dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="8dp"
+        android:text="NEXT"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@+id/buttonClear"
+        app:layout_constraintTop_toBottomOf="@+id/buttonClear" />
+
+    <TextView
+        android:id="@+id/textNameImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:text="Name Image"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.489"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/imageDisplay"
+        android:layout_width="375dp"
+        android:layout_height="513dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toTopOf="@+id/textNameImage"
+        app:layout_constraintEnd_toEndOf="@+id/buttonNext"
+        app:layout_constraintStart_toStartOf="@+id/buttonPrevious"
+        app:layout_constraintTop_toBottomOf="@+id/buttonNext"
+        app:srcCompat="@color/white" />
+
+    <Button
+        android:id="@+id/buttonClear"
+        android:layout_width="109dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="12dp"
+        android:text="Clear"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@+id/editTextURL"
+        app:layout_constraintTop_toBottomOf="@+id/editTextURL" />
+
+    <Button
+        android:id="@+id/buttonCamera"
+        android:layout_width="109dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="12dp"
+        android:text="Camera"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@+id/editTextURL"
+        app:layout_constraintTop_toBottomOf="@+id/editTextURL" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
