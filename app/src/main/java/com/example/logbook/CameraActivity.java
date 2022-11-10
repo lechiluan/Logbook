@@ -95,7 +95,7 @@ public class CameraActivity extends AppCompatActivity {
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
         startActivityForResult(cameraIntent, CAPTURE_CODE);
     }
-
+// CAp quyền
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -146,10 +146,8 @@ public class CameraActivity extends AppCompatActivity {
                         txtLocation.setText("Problem getting the location");
                     }
                 }
-
             }
         });
-
     }
 
     // Display the image
