@@ -8,9 +8,11 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -83,12 +85,26 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-    private void openCamera() {
+    public void openCamera() {
         ContentValues values = new ContentValues();
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            String[] permission = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(permission, PERMISSION_CODE);
+            }
+            return;
+        }
+        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        // global variable
+        double longitude = location.getLongitude();
+        double latitude = location.getLatitude();
+
         values.put(MediaStore.Images.Media.TITLE, "New Picture");
         values.put(MediaStore.Images.Media.DESCRIPTION, "From the Camera");
-        values.put(MediaStore.Images.Media.LATITUDE, txtLocation.getText().toString());
-        values.put(MediaStore.Images.Media.LONGITUDE, txtLocation.getText().toString());
+        values.put(MediaStore.Images.Media.LATITUDE, latitude);
+        values.put(MediaStore.Images.Media.LONGITUDE, longitude);
+
 
         imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -153,9 +169,10 @@ public class CameraActivity extends AppCompatActivity {
     // Display the image
     @SuppressLint("MissingSuperCall")
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if(resultCode == RESULT_OK){
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (resultCode == RESULT_OK) {
             imageCamera.setImageURI(imageUri);
+
         }
     }
 }

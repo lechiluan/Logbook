@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
     int index = -1;
     // -1 means no image is currently displayed
 
-
     String fileName = "file.txt"; // file name to save the list of URLs
 
     // Regex pattern for URL validation
