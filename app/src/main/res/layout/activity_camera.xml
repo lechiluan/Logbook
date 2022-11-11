@@ -6,62 +6,77 @@
     android:layout_height="match_parent"
     tools:context=".CameraActivity">
 
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_weight="30"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/buttonUpload"
-        android:layout_width="109dp"
+        android:id="@+id/buttonTakePhoto"
+        android:layout_width="135dp"
         android:layout_height="43dp"
-        android:text="Upload"
+        android:layout_marginTop="28dp"
+        android:text="Take Photo"
         android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/buttonNext"
         app:layout_constraintStart_toEndOf="@+id/buttonPrevious"
-        app:layout_constraintTop_toBottomOf="@+id/txtLocation"
+        app:layout_constraintTop_toBottomOf="@+id/imageCamera"
         tools:ignore="TouchTargetSizeCheck" />
 
     <ImageView
         android:id="@+id/imageCamera"
-        android:layout_width="361dp"
-        android:layout_height="569dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_width="402dp"
+        android:layout_height="300dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@color/purple_200" />
+        app:layout_constraintTop_toBottomOf="@+id/txtLocation"
+        tools:srcCompat="@color/purple_500" />
 
     <Button
         android:id="@+id/buttonPrevious"
         android:layout_width="109dp"
         android:layout_height="43dp"
-        android:layout_marginStart="28dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="28dp"
         android:text="Previous"
         android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="@+id/buttonUpload"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageCamera"
+        app:layout_constraintVertical_bias="0.058"
         tools:ignore="TouchTargetSizeCheck,TouchTargetSizeCheck" />
 
     <Button
         android:id="@+id/buttonNext"
         android:layout_width="109dp"
         android:layout_height="43dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginStart="184dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginEnd="16dp"
         android:text="Next"
         android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="@+id/buttonUpload"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/buttonPrevious"
+        app:layout_constraintTop_toBottomOf="@+id/imageCamera"
+        app:layout_constraintVertical_bias="0.058"
         tools:ignore="TouchTargetSizeCheck" />
 
     <TextView
         android:id="@+id/txtLocation"
-        android:layout_width="342dp"
-        android:layout_height="29dp"
-        android:layout_marginTop="20dp"
+        android:layout_width="360dp"
+        android:layout_height="23dp"
+        android:layout_marginTop="12dp"
         android:gravity="center"
         android:text="Location"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintHorizontal_bias="0.49"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageCamera" />
+        app:layout_constraintTop_toBottomOf="@+id/previewView" />
 </androidx.constraintlayout.widget.ConstraintLayout>
