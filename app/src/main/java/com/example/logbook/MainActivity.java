@@ -36,9 +36,9 @@ public class MainActivity extends AppCompatActivity {
     Button btnAdd, btnPrev, btnNext, btnReset, btnCamera;
     EditText inputURL;
     ImageView imageView;
-    TextView textNameImage;
+    TextView txtImageName;
 
-    String regex = "(https?:\\/\\/.*\\.(?:png|jpg|gif|jpeg))"; //regex for image url
+    String regex = "https?://(?:[a-z0-9\\-]+\\.)+[a-z]{2,6}(?:/[^/#?]+)+\\.(?:png|jpg|gif|jpeg)"; //regex for image url
 
     ArrayList<String> imageURLs = new ArrayList<>(); // list of saved URLs
 
@@ -52,14 +52,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         findAllElements(); // retrieve all ui elements on the form
-
-        try {
-            loadURLs(); // load URLs from file
-        } catch (IOException e) {
-            e.printStackTrace(); // print error messages
-            Toast.makeText(this, "File " + FILE_NAME + " is Empty!!!", Toast.LENGTH_SHORT).show();
-        }
-
+        loadImage(); // load image from file
         setImage(); // load URL into ImageView by using Glide
         whenClickNext(); // when click next button
         whenClickPrevious(); // when click previous button
@@ -68,6 +61,16 @@ public class MainActivity extends AppCompatActivity {
         whenClickCamera(); // when click camera button
     }
 
+    private void loadImage() {
+        try {
+            loadURLs(); // load URLs from file
+        } catch (IOException e) {
+            e.printStackTrace(); // print error messages
+            Toast.makeText(this, "No image to display!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
     private void whenClickReset() {
         // when click reset button
         btnReset.setOnClickListener(v -> {
@@ -76,11 +79,17 @@ public class MainActivity extends AppCompatActivity {
                 builder.setTitle("Confirm Delete"); // set title
                 builder.setMessage("Are you sure you want to clear all images?"); // set message
                 builder.setPositiveButton("Yes", (dialogInterface, i) -> {
-                    imageURLs.clear(); // clear the list of URLs
-                    imageView.setImageResource(0); // clear the image view
-                    removeFile(); // remove the file
-                    currentIndex = 0; // reset the index
-                    Toast.makeText(this, "All images have been deleted", Toast.LENGTH_SHORT).show();
+                    // check if image is empty
+                    if(imageURLs.size() == 0){
+                        Toast.makeText(this, "No image to reset!", Toast.LENGTH_SHORT).show();
+                    }else{
+                        imageURLs.clear(); // clear the list of URLs
+                        imageView.setImageResource(0); // clear the image view
+                        removeFile(); // remove the file
+                        currentIndex = 0; // reset the index
+                        Toast.makeText(this, "All images have been deleted", Toast.LENGTH_SHORT).show();
+                        txtImageName.setText("No Image"); // set text to No Image
+                    }
                 });
                 builder.setNegativeButton("No", (dialogInterface, i) -> {
                     //Do nothing
@@ -119,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
                         Glide.with(this).load(URL).into(imageView); // load the image into the image view
                         inputURL.setText(""); // clear the input box
                         currentIndex = imageURLs.indexOf(URL); // set the index to the last added URL
+                        txtImageName.setText(String.format("Image from URL: %s", URL)); // display the index
                     } catch (IOException e) {
                         e.printStackTrace();
                         Toast.makeText(this, "Error saving URL", Toast.LENGTH_SHORT).show(); // display message
@@ -151,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 currentIndex--;
                 setImage(); // load the image
                 // display name imageURL now
-                textNameImage.setText("Image URL iss " + imageURLs.get(currentIndex));
+                txtImageName.setText("Image URL is " + imageURLs.get(currentIndex));
             }
             else{
                 Toast.makeText(this, "No image to display", Toast.LENGTH_SHORT).show(); // display message
@@ -166,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
             if(imageURLs.size() > 1){
                 currentIndex++;
                 setImage(); // load the image
-                textNameImage.setText("Image URL is " + imageURLs.get(currentIndex));
+                txtImageName.setText("Image from URL: " + imageURLs.get(currentIndex));
             }
             else{
                 Toast.makeText(this, "No image to display", Toast.LENGTH_SHORT).show(); // display message
@@ -184,8 +194,7 @@ public class MainActivity extends AppCompatActivity {
             while (lineData != null) { // check if the line is not null
                 imageURLs.add(lineData); // add the URL to the list
                 lineData = bufferedReader.readLine(); // read the next line
-                // display url of image into text view
-                textNameImage.setText("Image URL is " + imageURLs.get(currentIndex));
+                txtImageName.setText("Image from URL: " + imageURLs.get(currentIndex)); // display the index
             }
         }
     }
@@ -210,6 +219,6 @@ public class MainActivity extends AppCompatActivity {
         btnCamera = findViewById(R.id.buttonCamera);
         inputURL = findViewById(R.id.editTextURL);
         imageView = findViewById(R.id.imageDisplay);
-        textNameImage = findViewById(R.id.textNameImage);
+        txtImageName = findViewById(R.id.txtImageName);
     }
 }
