@@ -1,5 +1,7 @@
 package com.example.logbook;
+
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -33,24 +35,23 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
+    // UI elements
     Button btnAdd, btnPrev, btnNext, btnReset, btnCamera;
     EditText inputURL;
     ImageView imageView;
     TextView txtImageName;
 
-    String regex = "https?://(?:[a-z0-9\\-]+\\.)+[a-z]{2,6}(?:/[^/#?]+)+\\.(?:png|jpg|gif|jpeg)"; //regex for image url
-
+    String regex = "https?://(?:[a-z0-9\\-]+\\.)+[a-z]{2,6}(?:/[^/#?]+)+\\.(?:png|jpg|gif|jpeg)"; //regex for checking if the input is a valid URL
     ArrayList<String> imageURLs = new ArrayList<>(); // list of saved URLs
 
     int currentIndex = 0; // index of current image
-    // -1 means no image is currently displayed
+
     private static final String FILE_NAME = "URLImage.txt"; // file name to save the list of URLs
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         findAllElements(); // retrieve all ui elements on the form
         loadImage(); // load image from file
         setImage(); // load URL into ImageView by using Glide
@@ -74,15 +75,15 @@ public class MainActivity extends AppCompatActivity {
     private void whenClickReset() {
         // when click reset button
         btnReset.setOnClickListener(v -> {
-            if(imageURLs.size() > 0){ // if there is at least one image
+            if (imageURLs.size() > 0) { // if there is at least one image
                 AlertDialog.Builder builder = new AlertDialog.Builder(this); // create a new alert dialog
                 builder.setTitle("Confirm Delete"); // set title
                 builder.setMessage("Are you sure you want to clear all images?"); // set message
                 builder.setPositiveButton("Yes", (dialogInterface, i) -> {
                     // check if image is empty
-                    if(imageURLs.size() == 0){
+                    if (imageURLs.size() == 0) {
                         Toast.makeText(this, "No image to reset!", Toast.LENGTH_SHORT).show();
-                    }else{
+                    } else {
                         imageURLs.clear(); // clear the list of URLs
                         imageView.setImageResource(0); // clear the image view
                         removeFile(); // remove the file
@@ -114,27 +115,34 @@ public class MainActivity extends AppCompatActivity {
             String URL = inputURL.getText().toString().trim(); // get the URL from the input box and trim the spaces
             Pattern p = Pattern.compile(regex); // create a pattern object using the regex
             Matcher m = p.matcher(URL); // create a matcher object to match the URL with the pattern
-            // check if the URL is empty
+
             if (URL.isEmpty()) {
                 inputURL.setError("Please enter a URL");
                 inputURL.requestFocus();
-            }
-            else {
-                if(m.matches()){ // check if the URL matches the regex
-                    imageURLs.add(URL);
-                    try {
-                        saveToFile(URL); // save the URL to the file
-                        Toast.makeText(this, "URL added successfully!", Toast.LENGTH_SHORT).show(); // display message
-                        Glide.with(this).load(URL).into(imageView); // load the image into the image view
-                        inputURL.setText(""); // clear the input box
-                        currentIndex = imageURLs.indexOf(URL); // set the index to the last added URL
-                        txtImageName.setText(String.format("Image from URL: %s", URL)); // display the index
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Toast.makeText(this, "Error saving URL", Toast.LENGTH_SHORT).show(); // display message
-                    }
-                }
-                else{
+            } else {
+                if (m.matches()) { // check if the URL matches the regex
+                    imageURLs.add(URL); // add the URL to the list of URLs
+
+                    ProgressDialog progressDialog = new ProgressDialog(this); // create a progress dialog
+                    progressDialog.setMessage("Downloading..."); // set message
+                    progressDialog.show(); // show the progress dialog
+                    new android.os.Handler().postDelayed(() -> {
+                        progressDialog.dismiss(); // dismiss the progress dialog
+                        // check if the URL is empty
+                        try {
+                            saveToFile(URL); // save the URL to the file
+                            Toast.makeText(this, "URL added successfully!", Toast.LENGTH_SHORT).show(); // display message
+                            Glide.with(this).load(URL).into(imageView); // load the image into the image view
+                            inputURL.setText(""); // clear the input box
+                            currentIndex = imageURLs.indexOf(URL); // set the index to the last added URL
+                            txtImageName.setText(String.format("Image from URL: %s", URL)); // display the index
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            Toast.makeText(this, "Error saving URL", Toast.LENGTH_SHORT).show(); // display message
+                        }
+                    }, 1000); // delay the progress dialog for 3 seconds
+
+                } else {
                     inputURL.setError("Please enter a valid URL"); // display error message
                     inputURL.requestFocus();
                     inputURL.setText(""); // clear the input box
@@ -157,13 +165,11 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     private void whenClickPrevious() {
         btnPrev.setOnClickListener(v -> {
-            if(imageURLs.size() > 1){
+            if (imageURLs.size() > 1) {
                 currentIndex--;
                 setImage(); // load the image
-                // display name imageURL now
-                txtImageName.setText("Image URL is " + imageURLs.get(currentIndex));
-            }
-            else{
+                txtImageName.setText("Image URL is " + imageURLs.get(currentIndex)); // display the index
+            } else {
                 Toast.makeText(this, "No image to display", Toast.LENGTH_SHORT).show(); // display message
             }
         });
@@ -173,12 +179,11 @@ public class MainActivity extends AppCompatActivity {
     private void whenClickNext() {
         btnNext.setOnClickListener(v -> {
             // size must be greater than 0 and the index must be less than the size of the list
-            if(imageURLs.size() > 1){
+            if (imageURLs.size() > 1) {
                 currentIndex++;
                 setImage(); // load the image
-                txtImageName.setText("Image from URL: " + imageURLs.get(currentIndex));
-            }
-            else{
+                txtImageName.setText("Image from URL: " + imageURLs.get(currentIndex)); // display name imageURL now
+            } else {
                 Toast.makeText(this, "No image to display", Toast.LENGTH_SHORT).show(); // display message
             }
         });
@@ -210,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
             Glide.with(this).load(imageURLs.get(currentIndex)).into(imageView); // load the image into the image view
         }
     }
+
     private void findAllElements() {
         // findViewById() for all the views
         btnAdd = findViewById(R.id.buttonAdd);

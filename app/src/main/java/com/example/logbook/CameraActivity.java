@@ -15,12 +15,17 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,6 +47,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -50,19 +56,96 @@ import java.util.concurrent.Executor;
 
 public class CameraActivity extends AppCompatActivity {
 
+    // Ul elements
     Button buttonTakePhoto;
     Button btnNext;
     Button btnPrev;
     ImageView imageCamera;
     TextView txtLocation, txtName;
     private ImageCapture imageCapture;
-    public double latitude;
-    public double longitude;
-    private FusedLocationProviderClient locationClient; // Location client
     private PreviewView previewView; //Camera Preview
-    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA"}; //, "android.permission.ACCESS_FINE_LOCATION"};
+    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.ACCESS_FINE_LOCATION"};
+    private int currentIndex = -1; //Index of the current image
 
-    private int currentIndex = 0; //Index of the current image
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_camera);
+
+        findAllElements(); //Find all the elements on the form
+        loadImageTaken(); //Load the images taken
+        // Check all the permissions
+        if (allPermissionsGranted()) {
+            startCamera(); //Start the camera
+            displayLocation(); //Display the location
+        } else {
+            int REQUEST_CODE_PERMISSIONS = 101; // Request code for the permissions
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS); //Request the permissions
+        }
+        // when click on the button take photo
+        whenClickTakePhoto();
+        // when click on the button next
+        whenClickNext();
+        // when click on the button prev
+        whenClickPrev();
+    }
+
+    private void whenClickPrev() {
+        btnPrev.setOnClickListener(v -> {
+            // previous image button click from getImageAbsolutePath method and loop it to the previous image
+            if(currentIndex == -1){
+                Toast.makeText(this, "No images to Previous", Toast.LENGTH_SHORT).show();
+            }else {
+                currentIndex--; // decrement the index
+                if (currentIndex < 0) {
+                    currentIndex = getImageAbsolutePaths().size() - 1; // if the index is less than 0 then set the index to the last image
+                }
+                // set animation to the image
+                setAnimationRightToLeft(); // set animation to the image
+                Glide.with(this).load(getImageAbsolutePaths().get(currentIndex)).centerCrop().into(imageCamera); // load the image
+                txtName.setText(getImageAbsolutePaths().get(currentIndex)); // set the image name
+            }
+        });
+    }
+
+    private void whenClickNext() {
+        btnNext.setOnClickListener(v -> {
+            // next image button click from getImageAbsolutePath method and loop it to the next image
+            List<String> imageAbsolutePaths = getImageAbsolutePaths(); // Get the list of image paths
+            final int size = imageAbsolutePaths.size(); // Get the size of the list
+            if(currentIndex == -1){
+                Toast.makeText(this, "No images to Next", Toast.LENGTH_SHORT).show();
+            } else {
+                currentIndex++; //Increment the index
+                if (currentIndex >= getImageAbsolutePaths().size()) {
+                    currentIndex = 0; //If the index is greater than the size of the array, set it to 0
+                }
+                setAnimationLeftToRight(); // set animation to the next image
+                Glide.with(this).load(getImageAbsolutePaths().get(currentIndex)).centerCrop().into(imageCamera); // load the image
+                txtName.setText(getImageAbsolutePaths().get(currentIndex)); // set the image name
+            }
+        });
+    }
+
+    private void whenClickTakePhoto() {
+        buttonTakePhoto.setOnClickListener(v -> takePhoto());
+    }
+
+    private void loadImageTaken() {
+        //Get the images from getImageAbsolutePaths last image taken
+        ArrayList<String> imagePaths = (ArrayList<String>) getImageAbsolutePaths();
+        final int size = imagePaths.size(); // Get the size of the list
+        if (size > 0) {
+            currentIndex = size - 1; // Set the current index to the last image
+            Glide.with(this).load(imagePaths.get(currentIndex)).centerCrop().into(imageCamera);
+            txtName.setText(imagePaths.get(currentIndex));
+        } else {
+            //If there are no images taken
+            imageCamera.setImageResource(R.drawable.image_preview);
+            txtName.setText("No images taken");
+        }
+    }
+
 
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -72,8 +155,9 @@ public class CameraActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getItemId() == R.id.action_delete){
+        if (item.getItemId() == R.id.action_delete) {
             deleteAllImage();
+            return true;
         }
         if (item.getItemId() == android.R.id.home) {
             this.finish();
@@ -88,51 +172,21 @@ public class CameraActivity extends AppCompatActivity {
         builder.setTitle("Delete All Camera Images");
         builder.setMessage("Are you sure you want to delete all camera images?");
         builder.setPositiveButton("Yes", (dialog, which) -> {
-            // delete all images
+            // delete all images from the storage
             getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null);
+            // delete all images from the gallery
+            getContentResolver().delete(MediaStore.Images.Media.INTERNAL_CONTENT_URI, null, null);
+            // reset the current index
+            currentIndex = -1;
+            // reload the image view
+            Glide.with(this).load(R.drawable.image_preview).into(imageCamera);
+            txtName.setText("");
             Toast.makeText(this, "All images deleted", Toast.LENGTH_SHORT).show();
         });
         builder.setNegativeButton("No", (dialog, which) -> {
-            // cancel
             dialog.dismiss();
         });
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_camera);
-        
-        locationClient = LocationServices.getFusedLocationProviderClient(this); // Get the location client
-
-        findAllElements(); //Find all the elements on the form
-
-        if (ActivityCompat.checkSelfPermission(this, permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) { //Check if the location permission is granted
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { //Check if the version is greater than or equal to Marshmallow
-                int REQUEST_PERMISSION_FINE_LOCATION = 1; //Request code for the permission
-                requestPermissions(new String[]{permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSION_FINE_LOCATION); //Request the permission
-            }
-        }
-        else {
-            showLocation(); //  Show the location
-        }
-        if (allPermissionsGranted()) {
-            startCamera(); //Start the camera
-        }
-        else {
-            int REQUEST_CODE_PERMISSIONS = 101; // Request code for the permissions
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS); //Request the permissions
-        }
-
-        buttonTakePhoto.setOnClickListener(v -> takePhoto());
-        btnNext.setOnClickListener(v -> {
-            setAnimationLeftToRight(); // Set the animation for the next button
-            setImageFromStorage(); // Set the image from the storage
-        });
-        btnPrev.setOnClickListener(v -> {
-            setAnimationRightToLeft(); // Set the animation for the previous button
-            setImageFromStorage(); // Set the image from the storage
-        });
+        builder.show();
     }
 
     @Override
@@ -141,15 +195,32 @@ public class CameraActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults); //Call the super method
         if(allPermissionsGranted()) { //Check if all the permissions are granted
             startCamera(); //Start the camera
+            displayLocation(); //Display the location
         } else {
             Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show(); //Show a toast message
-            finish();
+        }
+    }
+
+    private void displayLocation() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ){
+            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
+        }else{
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            Location Location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            try {
+                String city = hereLocation(Location.getLatitude(), Location.getLongitude()); // get city name
+                txtLocation.setText(String.format("Your location is %s\n Latitude is %s and Longitude is %s", city, Location.getLatitude(), Location.getLongitude())); // set location
+            }
+            catch (Exception e){
+                Toast.makeText(this, "Please turn on your location", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
     private boolean allPermissionsGranted() {
-        for (String permission : REQUIRED_PERMISSIONS) { //Loop through the required permissions
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), permission) != PackageManager.PERMISSION_GRANTED) { //Check if the permission is granted
+        // require camera permission and location permission
+        for (String permission : REQUIRED_PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
                 return false;
             }
         }
@@ -188,7 +259,7 @@ public class CameraActivity extends AppCompatActivity {
         final Uri uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI; // Get the URI of the images
         final String[] projection = { MediaStore.MediaColumns.DATA, // Get the data of the images
                 MediaStore.Images.Media.BUCKET_DISPLAY_NAME }; // Get the bucket display name of the images
-        final String orderBy = MediaStore.Images.Media.DATE_TAKEN + " DESC"; // Order the images by the date taken
+        final String orderBy = MediaStore.Images.Media.DATE_TAKEN; // Order the images by date taken
         final Cursor cursor = this.getContentResolver().query(uri, projection, null, // Get the cursor
                 null, orderBy); // Order the images by the date taken
 
@@ -199,6 +270,39 @@ public class CameraActivity extends AppCompatActivity {
         }
         cursor.close(); // Close the cursor
         return paths; // Return the list of image paths
+    }
+
+    private void setImageFromStorage(){
+        List<String> imageAbsolutePaths = getImageAbsolutePaths(); // Get the list of image paths
+        final int size = imageAbsolutePaths.size(); // Get the size of the list
+        if (size == 0 ) {
+            Toast.makeText(CameraActivity.this, "No photo found", Toast.LENGTH_SHORT).show(); // Show a toast message
+        }
+        else {
+            currentIndex++;
+            if (currentIndex >= size) {
+                currentIndex = 0;
+            }
+            final String imagePath = imageAbsolutePaths.get(currentIndex); // Get the image path
+            txtName.setText(imagePath); // Set the text of the text view
+            Glide.with(this).load(imagePath).centerCrop().into(imageCamera); // Set the image view
+        }
+    }
+
+    private void setAnimationRightToLeft() { // Set the animation from left to right
+        // Animation using pre-defined android Slide Left-to-Right
+        Animation in_left = AnimationUtils.loadAnimation(this,  R.anim.slide_in_left);
+        imageCamera.setAnimation(in_left);
+    }
+
+    private void setAnimationLeftToRight() { // Set the animation from right to left
+        // Animation using pre-defined android Slide Right-to-Left
+        Animation in_right = AnimationUtils.loadAnimation(this, R.anim.slide_in_right);
+        imageCamera.setAnimation(in_right);
+    }
+
+    Executor getExecutor() {
+        return ContextCompat.getMainExecutor(this); // Get the main executor
     }
 
     private void takePhoto() {
@@ -212,16 +316,15 @@ public class CameraActivity extends AppCompatActivity {
         contentValues.put(MediaStore.Images.Media.DATE_MODIFIED, timestamp); // Add the date modified image to the content values
 
         ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getContentResolver(), // Get the content resolver
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, // Get the URI of the images
-                        contentValues).build(); // Build the output file options
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, // Get the URI of the images
+                contentValues).build(); // Build the output file options
         imageCapture.takePicture(outputFileOptions, getExecutor(), // Take the picture
                 new ImageCapture.OnImageSavedCallback() { // Add a callback to the image capture
                     @Override
                     public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) { // On image saved
-
                         List<String> imageAbsolutePaths = getImageAbsolutePaths(); // Get the list of image paths
                         // display recent captured photo
-                        Glide.with(CameraActivity.this).load(imageAbsolutePaths.get(0)).centerCrop().into(imageCamera); // Load the image into the image view
+                        Glide.with(CameraActivity.this).load(imageAbsolutePaths.get(imageAbsolutePaths.size()-1)).centerCrop().into(imageCamera); // Load the image into the image view
                         txtName.setText(Objects.requireNonNull(outputFileResults.getSavedUri()).getPath()); // Set the text of the text view
                         // Show a toast message
                         Toast.makeText(CameraActivity.this, "Photo has been saved successfully. "+imageAbsolutePaths.size()+"@"+ outputFileResults.getSavedUri().getPath(), Toast.LENGTH_SHORT).show();
@@ -234,62 +337,25 @@ public class CameraActivity extends AppCompatActivity {
         );
     }
 
-
-    private void setImageFromStorage(){
-        List<String> imageAbsolutePaths = getImageAbsolutePaths(); // Get the list of image paths
-        final int count = imageAbsolutePaths.size(); // Get the size of the list
-        if (count ==0 ) {
-            Toast.makeText(CameraActivity.this, "No photo found", Toast.LENGTH_SHORT).show(); // Show a toast message
-        }
-        else {
-            currentIndex++;
-            if (currentIndex == count) {
-                currentIndex = 0; // Reset the current index
-            }
-            final String imagePath = imageAbsolutePaths.get(currentIndex); // Get the image path
-            txtName.setText(imagePath); // Set the text of the text view
-            Glide.with(this).load(imagePath).centerCrop().into(imageCamera); // Set the image view
-        }
-    }
-    private void setAnimationLeftToRight() { // Set the animation from left to right
-        // Animation using pre-defined android Slide Left-to-Right
-        Animation in_left = AnimationUtils.loadAnimation(this, android.R.anim.slide_in_left);
-        imageCamera.setAnimation(in_left);
-    }
-    private void setAnimationRightToLeft() { // Set the animation from right to left
-        // Animation using pre-defined android Slide Right-to-Left
-        Animation in_right = AnimationUtils.loadAnimation(this, android.R.anim.slide_out_right);
-        imageCamera.setAnimation(in_right);
-    }
-    Executor getExecutor() {
-        return ContextCompat.getMainExecutor(this); // Get the main executor
-    }
-
-    // Show location on the map
-    @SuppressLint({"MissingPermission", "SetTextI18n"})
-    public void showLocation() {
-        // Get the last location
-// Set the text of the text view
-        locationClient.getLastLocation().addOnSuccessListener(this, location -> {
-            if (location != null) { // If the location is not null
-                latitude = location.getLatitude(); // Get the latitude
-                longitude = location.getLongitude(); // Get the longitude
-                txtLocation.setText("Location is Lat:" + latitude + " Lon: " + longitude);
-            }
-        });
-        locationClient.getLastLocation().addOnCompleteListener(this, task -> {
-            if(task.isSuccessful()) {
-                Location location = task.getResult();
-                if (location != null) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                    txtLocation.setText(String.format("Location is Lat:%s Lon: %s", latitude, longitude));
-                }
-                else {
-                    txtLocation.setText("Problem getting the location");
+    private String hereLocation(double latitude, double longitude) {
+        String cityName = "";
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault()); // get city name
+        List<Address> addresses; // list of address
+        try {
+            addresses = geocoder.getFromLocation(latitude, longitude, 10); // get address from latitude and longitude
+            if (addresses.size() > 0) {
+                for (Address adr : addresses) {
+                    if (adr.getLocality() != null && adr.getLocality().length() > 0) { // check if city name is not null
+                        cityName = adr.getLocality();
+                        cityName = cityName + ", " + adr.getAdminArea() + ", " + adr.getCountryName();
+                        break;
+                    }
                 }
             }
-        });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return cityName;
     }
 
     // Get the list of image paths
