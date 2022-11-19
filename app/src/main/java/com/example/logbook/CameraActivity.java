@@ -178,8 +178,8 @@ public class CameraActivity extends AppCompatActivity {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ){
             requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
         }else{
-            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            Location Location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE); //Get the location manager
+            Location Location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER); //Get the location
             try {
                 String city = hereLocation(Location.getLatitude(), Location.getLongitude()); // get city name
                 txtLocation.setText(String.format("Your location is %s\n Latitude is %s and Longitude is %s", city, Location.getLatitude(), Location.getLongitude())); // set location
