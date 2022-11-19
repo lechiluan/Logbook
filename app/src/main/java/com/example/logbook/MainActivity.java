@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -32,7 +33,6 @@ import java.util.ArrayList;
 // https://developer.android.com/codelabs/basic-android-kotlin-training-internet-images
 // https://github.com/bumptech/glide
 
-
 public class MainActivity extends AppCompatActivity {
 
     // UI elements
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         findAllElements(); // retrieve all ui elements on the form
         loadImage(); // load image from file
-        setImage(); // load URL into ImageView by using Glide
+//        setImage(); // load URL into ImageView by using Glide
         whenClickNext(); // when click next button
         whenClickPrevious(); // when click previous button
         whenClickAdd(); // when click add button
@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "No image to reset!", Toast.LENGTH_SHORT).show();
                     } else {
                         imageURLs.clear(); // clear the list of URLs
-                        imageView.setImageResource(0); // clear the image view
+                        imageView.setImageResource(R.drawable.image_preview); // clear the image
                         removeFile(); // remove the file
                         currentIndex = 0; // reset the index
                         Toast.makeText(this, "All images have been deleted", Toast.LENGTH_SHORT).show();
@@ -122,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 if (m.matches()) { // check if the URL matches the regex
                     imageURLs.add(URL); // add the URL to the list of URLs
-
                     ProgressDialog progressDialog = new ProgressDialog(this); // create a progress dialog
                     progressDialog.setMessage("Downloading..."); // set message
                     progressDialog.show(); // show the progress dialog
@@ -168,7 +167,6 @@ public class MainActivity extends AppCompatActivity {
             if (imageURLs.size() > 1) {
                 currentIndex--;
                 setImage(); // load the image
-                txtImageName.setText("Image URL is " + imageURLs.get(currentIndex)); // display the index
             } else {
                 Toast.makeText(this, "No image to display", Toast.LENGTH_SHORT).show(); // display message
             }
@@ -182,7 +180,6 @@ public class MainActivity extends AppCompatActivity {
             if (imageURLs.size() > 1) {
                 currentIndex++;
                 setImage(); // load the image
-                txtImageName.setText("Image from URL: " + imageURLs.get(currentIndex)); // display name imageURL now
             } else {
                 Toast.makeText(this, "No image to display", Toast.LENGTH_SHORT).show(); // display message
             }
@@ -199,11 +196,14 @@ public class MainActivity extends AppCompatActivity {
             while (lineData != null) { // check if the line is not null
                 imageURLs.add(lineData); // add the URL to the list
                 lineData = bufferedReader.readLine(); // read the next line
+                currentIndex = imageURLs.size() - 1; // set the index to the last added URL
+                Glide.with(this).load(imageURLs.get(currentIndex)).into(imageView); // load the image into the image view
                 txtImageName.setText("Image from URL: " + imageURLs.get(currentIndex)); // display the index
             }
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private void setImage() {
         int size = imageURLs.size();
         if (currentIndex >= size) {
@@ -213,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (size > 0) {
             Glide.with(this).load(imageURLs.get(currentIndex)).into(imageView); // load the image into the image view
+            txtImageName.setText("Image from URL: " + imageURLs.get(currentIndex)); // display the index
         }
     }
 

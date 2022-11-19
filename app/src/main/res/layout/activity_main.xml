@@ -83,7 +83,7 @@
         app:layout_constraintStart_toStartOf="@+id/buttonPrevious"
         app:layout_constraintTop_toBottomOf="@+id/txtImageName"
         app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@color/white" />
+        app:srcCompat="@drawable/image_preview" />
 
     <Button
         android:id="@+id/buttonReset"

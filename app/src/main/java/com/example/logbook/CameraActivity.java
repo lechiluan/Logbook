@@ -1,6 +1,5 @@
 package com.example.logbook;
 
-import static android.Manifest.*;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,8 +12,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -25,7 +22,6 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,8 +37,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.ArrayList;
@@ -71,9 +65,8 @@ public class CameraActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-
         findAllElements(); //Find all the elements on the form
-        loadImageTaken(); //Load the images taken
+        setImageFromStorage(); //Set the image from the storage
         // Check all the permissions
         if (allPermissionsGranted()) {
             startCamera(); //Start the camera
@@ -92,8 +85,9 @@ public class CameraActivity extends AppCompatActivity {
 
     private void whenClickPrev() {
         btnPrev.setOnClickListener(v -> {
-            // previous image button click from getImageAbsolutePath method and loop it to the previous image
-            if(currentIndex == -1){
+            List<String> imageAbsolutePaths = getImageAbsolutePaths(); // Get the list of image paths
+            final int size = imageAbsolutePaths.size(); // Get the size of the list
+            if(size <= 1){
                 Toast.makeText(this, "No images to Previous", Toast.LENGTH_SHORT).show();
             }else {
                 currentIndex--; // decrement the index
@@ -110,10 +104,9 @@ public class CameraActivity extends AppCompatActivity {
 
     private void whenClickNext() {
         btnNext.setOnClickListener(v -> {
-            // next image button click from getImageAbsolutePath method and loop it to the next image
             List<String> imageAbsolutePaths = getImageAbsolutePaths(); // Get the list of image paths
             final int size = imageAbsolutePaths.size(); // Get the size of the list
-            if(currentIndex == -1){
+            if(size <= 1){
                 Toast.makeText(this, "No images to Next", Toast.LENGTH_SHORT).show();
             } else {
                 currentIndex++; //Increment the index
@@ -130,22 +123,6 @@ public class CameraActivity extends AppCompatActivity {
     private void whenClickTakePhoto() {
         buttonTakePhoto.setOnClickListener(v -> takePhoto());
     }
-
-    private void loadImageTaken() {
-        //Get the images from getImageAbsolutePaths last image taken
-        ArrayList<String> imagePaths = (ArrayList<String>) getImageAbsolutePaths();
-        final int size = imagePaths.size(); // Get the size of the list
-        if (size > 0) {
-            currentIndex = size - 1; // Set the current index to the last image
-            Glide.with(this).load(imagePaths.get(currentIndex)).centerCrop().into(imageCamera);
-            txtName.setText(imagePaths.get(currentIndex));
-        } else {
-            //If there are no images taken
-            imageCamera.setImageResource(R.drawable.image_preview);
-            txtName.setText("No images taken");
-        }
-    }
-
 
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -172,10 +149,8 @@ public class CameraActivity extends AppCompatActivity {
         builder.setTitle("Delete All Camera Images");
         builder.setMessage("Are you sure you want to delete all camera images?");
         builder.setPositiveButton("Yes", (dialog, which) -> {
-            // delete all images from the storage
-            getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null);
             // delete all images from the gallery
-            getContentResolver().delete(MediaStore.Images.Media.INTERNAL_CONTENT_URI, null, null);
+            getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null);
             // reset the current index
             currentIndex = -1;
             // reload the image view
@@ -183,9 +158,7 @@ public class CameraActivity extends AppCompatActivity {
             txtName.setText("");
             Toast.makeText(this, "All images deleted", Toast.LENGTH_SHORT).show();
         });
-        builder.setNegativeButton("No", (dialog, which) -> {
-            dialog.dismiss();
-        });
+        builder.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 
@@ -229,7 +202,6 @@ public class CameraActivity extends AppCompatActivity {
 
     public void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this); // Get the camera provider
-
         cameraProviderFuture.addListener(() -> { // Add a listener to the camera provider
             try {
                 // Camera provider is now guaranteed to be available
@@ -272,20 +244,19 @@ public class CameraActivity extends AppCompatActivity {
         return paths; // Return the list of image paths
     }
 
+    @SuppressLint("SetTextI18n")
     private void setImageFromStorage(){
-        List<String> imageAbsolutePaths = getImageAbsolutePaths(); // Get the list of image paths
-        final int size = imageAbsolutePaths.size(); // Get the size of the list
-        if (size == 0 ) {
-            Toast.makeText(CameraActivity.this, "No photo found", Toast.LENGTH_SHORT).show(); // Show a toast message
-        }
-        else {
-            currentIndex++;
-            if (currentIndex >= size) {
-                currentIndex = 0;
-            }
-            final String imagePath = imageAbsolutePaths.get(currentIndex); // Get the image path
-            txtName.setText(imagePath); // Set the text of the text view
-            Glide.with(this).load(imagePath).centerCrop().into(imageCamera); // Set the image view
+        //Get the images from getImageAbsolutePaths last image taken
+        ArrayList<String> imagePaths = (ArrayList<String>) getImageAbsolutePaths();
+        final int size = imagePaths.size(); // Get the size of the list
+        if (size > 0) {
+            currentIndex = size - 1; // Set the current index to the last image
+            Glide.with(this).load(imagePaths.get(currentIndex)).centerCrop().into(imageCamera);
+            txtName.setText(imagePaths.get(currentIndex));
+        } else {
+            //If there are no images taken
+            imageCamera.setImageResource(R.drawable.image_preview);
+            txtName.setText("No images taken");
         }
     }
 
@@ -346,8 +317,7 @@ public class CameraActivity extends AppCompatActivity {
             if (addresses.size() > 0) {
                 for (Address adr : addresses) {
                     if (adr.getLocality() != null && adr.getLocality().length() > 0) { // check if city name is not null
-                        cityName = adr.getLocality();
-                        cityName = cityName + ", " + adr.getAdminArea() + ", " + adr.getCountryName();
+                        cityName = adr.getSubAdminArea() + ", " + adr.getAdminArea() + ", " + adr.getCountryName();
                         break;
                     }
                 }
