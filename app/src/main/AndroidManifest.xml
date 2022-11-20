@@ -26,6 +26,8 @@
             android:name=".CameraActivity"
             android:exported="false"
             android:label="Camera"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity"
             android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.app.lib_name"
@@ -34,6 +36,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity"
             android:label="URL Camera">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
